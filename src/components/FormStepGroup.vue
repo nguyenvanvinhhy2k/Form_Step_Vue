@@ -42,18 +42,19 @@
           </div>
           <div class="form-control" v-if="step === 1">
             <label> Your Email </label>
-            <input
+            <input 
               type="email"
               v-model="email"
               :class="{ 'is-invalid': $v.email.$error }"
             />
-            <div class="eror">
-              <span style="color: red" v-if="!$v.email.email"
-                >Should be in email format</span
-              >
+            <div class="eror" >
+            
               <span style="color: red" v-if="$v.email.$error">
                 Email is required
               </span>
+                <span  style="color: red" v-if="!$v.email.email"
+                > format</span
+              >
               <!-- <span style="color: red" v-if="$v.email.email.$error">Email is required</span> -->
             </div>
           </div>
@@ -63,10 +64,7 @@
             <input
               type="text"
               v-model="company"
-              :class="{
-                'is-invalid': $v.company.$error,
-                'is-valid': $v.company.$invalid,
-              }"
+              :class="{ 'is-invalid': $v.company.$error }"
             />
 
             <div class="eror">
@@ -91,6 +89,9 @@
               <span style="color: red" v-if="$v.phone.$error"
                 >Phone is required</span
               >
+              <span style="color: red" v-if="!$v.phone.numeric"
+                > number</span
+              >
             </div>
           </div>
 
@@ -102,14 +103,14 @@
               v-model="from"
               :class="{
                 'is-invalid': $v.from.$error,
-              }"
+              }" style="font-size:18px"
             >
-              <option class="select-title" value="Friend">Friend</option>
+              <option class="select-title" value="Friend" style="font-size:18px">Friend</option>
               <option class="select-title" value="Facebook">FaceBook</option>
               <option class="select-title" value="Website">Website</option>
             </select>
             <div class="eror">
-              <span style="color: red" v-if="$v.from.$error"
+              <span style="color: red;font-size:12px" v-if="$v.from.$error"
                 >From is required</span
               >
             </div>
@@ -138,15 +139,19 @@
     </div>
 
     <div class="form-step-btn">
-      <button :disabled="step === 1" @click="prevStep" class="btn prev">
+      <button :disabled="step === 1 " v-if="step !== 3" @click="prevStep" class="btn prev">
         Prev Step
       </button>
       <button v-if="step !== totalSteps" @click="nextStep" class="btn next">
         Next Step
       </button>
+      <button style="margin-right:20px" v-if="step === 3" @click.prevent="reset()" class="btn next">
+        Reset
+      </button>
       <button v-if="step === 3" @click="sendRequired" class="btn next">
         Send
       </button>
+      
     </div>
     <!-- <FormStepBtn nextStep /> -->
   </div>
@@ -157,52 +162,96 @@ import {
   required,
   minLength,
   maxLength,
-  between,
+  numeric,
   email,
 } from "vuelidate/lib/validators";
-// import FormStepBtn from "./FormStepBtn.vue"
-// import StepForm from "./StepForm.vue"
-// import FormStepWrap from "./FormStepWrap.vue"
+
 export default {
   name: "FormStepGroup",
   components: {
-    // FormStepBtn,
-    // StepForm,
-    // FormStepWrap,
+
   },
   data() {
     return {
-      firstname: "",
-      email: null,
-      company: null,
-      phone: null,
-      from: null,
-      accept: null,
       step: 1,
       totalSteps: 3,
-      isActive: "active",
+      isActive: "is-invalid",
     };
   },
   validations: {
     firstname: { required, minLength: minLength(3), maxLength: maxLength(13) },
     email: { required, email },
     company: { required, minLength: minLength(3), maxLength: maxLength(13) },
-    phone: { required, between: between(1, 10000000000000) },
+    phone: { required, numeric },
     from: { required, minLength: minLength(3), maxLength: maxLength(13) },
     accept: { required, minLength: minLength(3), maxLength: maxLength(13) },
   },
   computed: {
+    // resett () {
+    //   return this.$store.getters.reset
+    // },
     steper() {
       return (100 / 3) * this.step + "%";
     },
+    formData() {
+      return this.$store.state.formData
+    },
+    firstname: {
+                get() {
+                    return this.$store.state.formData.firstname
+                },
+                set(value) {
+                    this.$store.commit('setName', value)
+                }
+            },
+        email: {
+                get() {
+                    return this.$store.state.formData.email
+                },
+                set(value) {
+                    this.$store.commit('setEmail', value)
+                }
+            },
+            company: {
+                get() {
+                    return this.$store.state.formData.company
+                },
+                set(value) {
+                    this.$store.commit('setCompany', value)
+                }
+            },
+            phone: {
+                get() {
+                    return this.$store.state.formData.phone
+                },
+                set(value) {
+                    this.$store.commit('setPhone', value)
+                }
+            },
+            from: {
+                get() {
+                    return this.$store.state.formData.from
+                },
+                set(value) {
+                    this.$store.commit('setFrom', value)
+                }
+            },
+            accept: {
+                get() {
+                    return this.$store.state.formData.accept
+                },
+                set(value) {
+                    this.$store.commit('setAccept', value)
+                }
+            },
   },
   methods: {
     nextStep() {
       this.isActive = "active";
-      this.$v.$touch();
+      !this.$v.$touch();
       if (this.step === 1 && this.$v.firstname.$error) return false;
       if (this.step === 1 && this.$v.email.$error) return false;
-      this.$v.$touch();
+      // this.$v.$touch();
       if (this.step === 2 && this.$v.company.$error) return false;
       if (this.step === 2 && this.$v.phone.$error) return false;
 
@@ -217,175 +266,24 @@ export default {
       if (this.step === 3 && this.$v.accept.$error) {
         return false;
       } else {
-        console.log([
-          { name: this.firstname },
-          { email: this.email },
-          { company: this.company },
-          { phone: this.phone },
-          { from: this.from },
-          { accept: this.accept },
-        ]);
+        console.log(this.formData);
       }
-    },
+    },  
+    reset () {
+      this.step = 1
+      this.$v.$reset()
+      this.$store.state.formData.firstname = null
+      this.$store.state.formData.email =  null
+      this.$store.state.formData.company = null
+      this.$store.state.formData.phone = null
+      this.$store.state.formData.from = null
+      this.$store.state.formData.accept = null
+    
+    }
   },
 };
 </script>
 
 <style scoped>
-.form-group {
-  width: 900px;
-  margin: 0 auto;
-  border-radius: 12px;
-  background-color: #fff;
-  box-shadow: 0 4px 10px rgb(0 0 0 / 20%), 6px 12px 20px rgb(0 0 0 / 10%);
-  margin-top: 15px;
-  padding: 20px;
-}
-.form-step-group label {
-  display: block;
-  color: #000;
-  font-size: 16px;
-  display: block;
-  margin-bottom: 6px;
-}
-input {
-  width: 96%;
-  color: #586068;
-  font-size: 16px;
 
-  padding: 8px 16px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  outline: 3px solid transparent;
-  transition: all 0.2s ease;
-}
-.form-control {
-  margin-bottom: 20px;
-  margin-top: 10px;
-  text-align: left;
-}
-.message {
-  color: #aa4651;
-  font-size: 12px;
-  margin-top: 8px;
-}
-.select_wrap {
-  width: 100%;
-  height: 40px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  position: relative;
-  cursor: pointer;
-}
-.select-title {
-  display: block;
-  width: 100%;
-  height: 100%;
-  padding: 10px 12px;
-  font-size: 18px;
-}
-
-.checkbox {
-  width: 20px;
-  float: left;
-}
-.check-term label {
-  text-align: left;
-  margin-top: 25px;
-}
-/* FormStepBtn */
-
-.form-step-btn {
-  margin-top: 50px;
-}
-.btn {
-  display: inline-block;
-  border: unset;
-  font-size: 16px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: #fff;
-  padding: 8px 24px;
-  border-radius: 12px;
-  cursor: pointer;
-  box-shadow: 1px 1px 10px rgb(0 0 0 / 40%);
-  transition: box-shadow 0.35s ease-out;
-}
-.prev {
-  background-color: #72e6b1;
-  margin: 0 20px;
-}
-.next {
-  background-color: #1e68cf;
-}
-.active {
-  border-radius: 1px solid red;
-}
-
-/* Step form*/
-
-.progress-boder {
-  margin: 0 auto;
-  width: 940px;
-  height: 20px;
-  background-color: white;
-  border-radius: 12px;
-  overflow: hidden;
-}
-.proress-content {
-  height: 100%;
-  width: 37%;
-  background-color: #437fe8;
-  border-radius: 12px;
-  transition: width 0.5s ease;
-}
-
-/* FormStepWrap */
-
-.form-step-wrap {
-  width: 900px;
-
-  margin: 0 auto;
-  border-radius: 12px;
-  background-color: #fff;
-  box-shadow: 0 4px 10px rgb(0 0 0 / 20%), 6px 12px 20px rgb(0 0 0 / 10%);
-  margin-top: 15px;
-  padding: 20px;
-}
-
-.form-step-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.title {
-  padding: 8px 20px;
-  border-radius: 12px;
-  background-color: #f3f3f3;
-}
-.number {
-  display: inline-block;
-  font-size: 16px;
-  width: 24px;
-  height: 24px;
-  line-height: 24px;
-  border-radius: 50%;
-  color: #f7f7f7;
-  background-color: #969899;
-  margin-right: 8px;
-}
-.text {
-  color: #8f9294;
-  font-size: 16px;
-  font-weight: 550;
-}
-.active {
-  border: 2px solid #32683c;
-}
-.eror {
-  margin-top: 10px;
-}
-.is-invalid {
-  border: 1px solid #32683c;
-}
 </style>

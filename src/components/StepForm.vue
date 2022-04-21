@@ -9,7 +9,7 @@
 
 <script>
 export default {
-  name: 'HelloWorld',
+  name: 'StepForm',
   data() {
     return {
       formData :{
